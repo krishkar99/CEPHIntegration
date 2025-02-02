@@ -1,0 +1,380 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: CEPH Integration
+  license:
+    name: MIT
+servers:
+  - url: http://<ceph.integration>.io/v1
+
+paths:
+  /public/v1/storage_clusters:
+    post:
+      summary: Create storage cluster
+      operationId: createStorageCluster
+      tags:
+        - admin
+      requestBody:
+        $ref: "#/components/requestBodies/CreateStorageClusterRequest"
+      responses:
+        '200':
+          $ref: "#/components/responses/StorageClusterResponse"
+    get:
+      summary: List storage clusters
+      operationId: listStorageCluster
+      tags:
+        - admin
+      responses:
+        '200':
+          $ref: "#/components/responses/ListStorageClusterResponse"
+  /public/v1/storage_clusters/{storageClusterId}:
+    parameters:
+      - name: storageClusterId
+        in: path
+        description: Storage cluster id
+        schema:
+          type: string
+          format: uuid
+        explode: false
+        style: simple
+        example: 9e740000-331b-4dec-89b0-4e59b81e9019
+        required: true
+    get:
+      summary: Get storage cluster by id
+      operationId: getStorageClusterByID
+      tags:
+        - admin
+      responses:
+        '200':
+          $ref: "#/components/responses/StorageClusterResponse"
+    delete:
+      summary: Delete storage cluster by id
+      operationId: deleteStorageClusterById
+      tags:
+        - admin
+      responses:
+        '200':
+          description: Storage cluster successfully deleted
+  /public/v1/storage_clusters/{storageClusterId}/nodes:
+    parameters:
+      - name: storageClusterId
+        in: path
+        description: List nodes of storage cluster
+        schema:
+          type: string
+          format: uuid
+        explode: false
+        style: simple
+        example: 9e740000-331b-4dec-89b0-4e59b81e9019
+        required: true
+    post:
+      summary: Add node to storage cluster
+      operationId: addNodeToStorageCluster
+      tags:
+        - admin
+      requestBody:
+        $ref: "#/components/requestBodies/AddNodeToStorageClusterRequest"
+      responses:
+        '200':
+          $ref: "#/components/responses/ListNodeResponse"
+    get:
+      summary: Get nodes of storage cluster by id
+      operationId: listStorageClusterNodesById
+      tags:
+        - admin
+      responses:
+        '200':
+          $ref: "#/components/responses/ListNodeResponse"
+  /public/v1/credentials:
+    post:
+      summary: Create temporary credentials
+      operationId: createTemporaryCredentials
+      tags:
+        - user
+      responses:
+        '200':
+          $ref: "#/components/responses/TemporaryCredentialsResponse"
+  /public/v1/buckets:
+    post:
+      summary: Create bucket in storage cluster
+      operationId: createBucketInStorageCluster
+      tags:
+        - user
+      requestBody:
+        $ref: "#/components/requestBodies/CreateBucketRequest"
+      responses:
+        '200':
+          $ref: "#/components/responses/BucketResponse"
+    get:
+      summary: List bucket
+      operationId: listBucketOfStorageCluster
+      tags:
+        - user
+      responses:
+        '200':
+          $ref: "#/components/responses/ListBucketResponse"
+
+
+
+components:
+  requestBodies:
+    CreateStorageClusterRequest:
+      description: Create storage cluster request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StorageClusterSpec"
+    AddNodeToStorageClusterRequest:
+      description: Add node to storage cluster request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/NodeInfo"
+    CreateBucketRequest:
+      description: Create storage bucket in storage cluster
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BucketSpec"
+
+  responses:
+    BucketResponse:
+      description: Bucket response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Bucket"
+    TemporaryCredentialsResponse:
+      description: Temporary credential response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TemporaryCredential"
+    ListStorageClusterResponse:
+      description: List storage cluster response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ListStorageCluster"
+    StorageClusterResponse:
+      description: Storage cluster response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StorageCluster"
+    ListNodeResponse:
+      description: List storage cluster node
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/NodeInfo"
+    ListBucketResponse:
+      description: List storage cluster node
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ListBucket"
+
+  schemas:
+    TemporaryCredential:
+      title: Temporary credential
+      description: Temporary credential
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        ttl_in_seconds:
+          type: integer
+          description: TTL in seconds
+          example: 180
+      required:
+        - token
+        - ttl_in_seconds
+    ListStorageCluster:
+      title: List storage cluster response
+      description: List storage cluster response
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorageCluster"
+        _metadata:
+          $ref: "#/components/schemas/Pagination"
+      required:
+        - data
+        - _metadata
+    Pagination:
+      title: Pagination object
+      description: Pagination object
+      type: object
+      properties:
+        total_record_count:
+          description: Total record count
+          type: integer
+          format: int64
+          example: 400
+        per_page_record_count:
+          description: Page record size
+          type: integer
+          example: 20
+        page_number:
+          description: Page number
+          type: integer
+          example: 20
+        total_page_count:
+          description: Total page count
+          type: integer
+          format: int64
+          example: 20
+        offset:
+          description: Page offset
+          type: integer
+          format: int64
+          example: 400
+      required:
+        - total_record_count
+        - per_page_record_count
+        - total_page_count
+    StorageCluster:
+      title: Storage cluster response
+      description: Storage cluster response
+      type: object
+      properties:
+        info:
+          $ref: "#/components/schemas/StorageClusterInfo"
+        spec:
+          $ref: "#/components/schemas/StorageClusterSpec"
+      required:
+        - spec
+        - info
+    Bucket:
+      title: Storage bucket
+      description: Storage bucket
+      type: object
+      properties:
+        info:
+          $ref: "#/components/schemas/BucketSpec"
+        spec:
+          $ref: "#/components/schemas/BucketInfo"
+      required:
+        - spec
+        - info
+    StorageClusterSpec:
+      title: Storage cluster spec
+      description: Storage cluster spec
+      type: object
+      properties:
+        name:
+          description: Storage name
+          type: string
+          example: storage_01
+        subnet:
+          description: subnet
+          type: string
+          example: 172.16.1.0/24
+        node_info:
+          $ref: "#/components/schemas/NodeInfo"
+      required:
+        - name
+        - subnet
+        - node_info
+    StorageClusterInfo:
+      title: Storage cluster info
+      description: Storage cluster info
+      type: object
+      properties:
+        id:
+          description: Storage cluster id
+          type: string
+          format: uuid
+          example: 9e740000-331b-4dec-89b0-4e59b81e9019
+        created_on:
+          description: Storage cluster created on
+          type: string
+          format: date-time
+          example: 2024-02-20T11:31:03.416137Z
+      required:
+        - id
+        - created_on
+    BucketInfo:
+      title: Storage bucket info
+      description: Storage bucket info
+      type: object
+      properties:
+        id:
+          description: Storage bucket id
+          type: string
+          format: uuid
+          example: 9e740000-331b-4dec-89b0-4e59b81e9019
+        created_on:
+          description: Storage bucket created on
+          type: string
+          format: date-time
+          example: 2024-02-20T11:31:03.416137Z
+      required:
+        - id
+        - created_on
+    Node:
+      title: Node info
+      description: Node info
+      type: object
+      properties:
+        id:
+          description: Node id
+          type: string
+          format: uuid
+          example: 9e740000-331b-4dec-89b0-4e59b81e9019
+        host_name:
+          description: Node host name
+          type: string
+          example: storage_node_01
+        ip_address:
+          description: Node ip address
+          type: string
+          example: 172.16.10.10
+        private_ip_address:
+          description: Private IP address of node
+          type: string
+          example: 10.0.0.2
+      required:
+        - host_name
+        - ip_address
+        - private_ip_address
+        - id
+    NodeInfo:
+      type: array
+      items:
+        $ref: "#/components/schemas/Node"
+    ListBucket:
+      title: List bucket
+      description: List bucket
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bucket"
+        metadata:
+          $ref: "#/components/schemas/Pagination"
+
+    BucketSpec:
+      title: Bucket spec
+      description: Bucket spec
+      type: object
+      properties:
+        id:
+          description: Bucket id
+          type: string
+          format: uuid
+          example: 9e740000-331b-4dec-89b0-4e59b81e9019
+        name:
+          description: Bucket name
+          type: string
+          example: aws_east_bucket
+      required:
+        - id
+        - name
+
+
